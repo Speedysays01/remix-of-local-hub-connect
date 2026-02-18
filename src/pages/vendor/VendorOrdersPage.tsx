@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useVendorOrders, useUpdateOrderStatus, OrderStatus, STATUS_STYLES, STATUS_LABELS } from "@/hooks/useOrders";
-import { Loader2, ClipboardList, MapPin, Clock } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2, ClipboardList, MapPin, Clock, ShieldOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Vendors can only drive orders through: pending→accepted→ready_for_pickup / cancel
 const TRANSITIONS: Record<OrderStatus, { label: string; to: OrderStatus }[]> = {
@@ -15,9 +17,11 @@ const TRANSITIONS: Record<OrderStatus, { label: string; to: OrderStatus }[]> = {
   cancelled:        [],
 };
 
-const OrderCard: React.FC<{ order: ReturnType<typeof useVendorOrders>["data"] extends (infer T)[] | undefined ? T : never }> = ({ order }) => {
+const OrderCard: React.FC<{
+  order: ReturnType<typeof useVendorOrders>["data"] extends (infer T)[] | undefined ? T : never;
+  suspended: boolean;
+}> = ({ order, suspended }) => {
   const updateStatus = useUpdateOrderStatus();
-
   const actions = TRANSITIONS[order.status];
 
   return (
@@ -66,7 +70,7 @@ const OrderCard: React.FC<{ order: ReturnType<typeof useVendorOrders>["data"] ex
       </div>
 
       {/* Actions */}
-      {actions.length > 0 && (
+      {actions.length > 0 && !suspended && (
         <div className="flex gap-2 pt-1">
           {actions.length === 1 ? (
             <Button
@@ -101,11 +105,18 @@ const OrderCard: React.FC<{ order: ReturnType<typeof useVendorOrders>["data"] ex
           )}
         </div>
       )}
+      {actions.length > 0 && suspended && (
+        <p className="text-xs text-destructive/80 pt-1 flex items-center gap-1.5">
+          <ShieldOff className="h-3.5 w-3.5" />
+          Order actions disabled — account suspended
+        </p>
+      )}
     </div>
   );
 };
 
 const VendorOrdersPage: React.FC = () => {
+  const { isVendorActive } = useAuth();
   const { data: orders, isLoading } = useVendorOrders();
   const [tab, setTab] = useState<"active" | "all">("active");
 
@@ -123,6 +134,14 @@ const VendorOrdersPage: React.FC = () => {
 
   return (
     <div className="space-y-5">
+      {!isVendorActive && (
+        <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
+          <ShieldOff className="h-4 w-4" />
+          <AlertDescription className="font-medium">
+            Your account has been suspended. You can view existing orders but cannot accept or process new ones.
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Incoming Orders</h2>
         {activeOrders.length > 0 && (
@@ -152,7 +171,7 @@ const VendorOrdersPage: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {displayed.map((order) => (
-                <OrderCard key={order.id} order={order} />
+                <OrderCard key={order.id} order={order} suspended={!isVendorActive} />
               ))}
             </div>
           )}

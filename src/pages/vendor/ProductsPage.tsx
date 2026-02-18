@@ -7,6 +7,7 @@ import {
   type Product,
   type ProductFormData,
 } from "@/hooks/useProducts";
+import { useAuth } from "@/contexts/AuthContext";
 import ProductForm from "./components/ProductForm";
 import {
   Dialog,
@@ -26,12 +27,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  Package, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, ImageOff, Loader2,
+  Package, Plus, Pencil, Trash2, ImageOff, Loader2, ShieldOff,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 const ProductsPage: React.FC = () => {
+  const { isVendorActive } = useAuth();
   const { data: products, isLoading } = useVendorProducts();
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
@@ -67,6 +70,15 @@ const ProductsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {!isVendorActive && (
+        <Alert className="border-destructive/50 bg-destructive/10 text-destructive">
+          <ShieldOff className="h-4 w-4" />
+          <AlertDescription className="font-medium">
+            Your account has been suspended by the platform. Product management is disabled. Contact support to resolve this.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -77,7 +89,8 @@ const ProductsPage: React.FC = () => {
         </div>
         <Button
           onClick={() => setShowForm(true)}
-          className="brand-gradient text-white hover:opacity-90"
+          disabled={!isVendorActive}
+          className="brand-gradient text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="mr-2 h-4 w-4" />
           Add Product
@@ -98,7 +111,8 @@ const ProductsPage: React.FC = () => {
           </p>
           <Button
             onClick={() => setShowForm(true)}
-            className="brand-gradient text-white hover:opacity-90"
+            disabled={!isVendorActive}
+            className="brand-gradient text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add your first product
@@ -157,6 +171,7 @@ const ProductsPage: React.FC = () => {
                   <div className="flex items-center gap-1.5 mr-auto">
                     <Switch
                       checked={product.is_active}
+                      disabled={!isVendorActive}
                       onCheckedChange={() => handleToggleActive(product)}
                       className="scale-90"
                     />
@@ -168,6 +183,7 @@ const ProductsPage: React.FC = () => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
+                    disabled={!isVendorActive}
                     onClick={() => setEditingProduct(product)}
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -176,6 +192,7 @@ const ProductsPage: React.FC = () => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={!isVendorActive}
                     onClick={() => setDeletingId(product.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
