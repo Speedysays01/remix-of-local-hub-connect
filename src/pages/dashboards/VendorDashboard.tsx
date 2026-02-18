@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import ProductsPage from "@/pages/vendor/ProductsPage";
 import VendorOrdersPage from "@/pages/vendor/VendorOrdersPage";
+import VendorStorePage from "@/pages/vendor/VendorStorePage";
 import { Route, Routes } from "react-router-dom";
 
 const navItems = [
@@ -96,6 +97,7 @@ const VendorDashboard: React.FC = () => {
         <Route index element={<VendorHome />} />
         <Route path="products" element={<ProductsPage />} />
         <Route path="orders" element={<VendorOrdersPage />} />
+        <Route path="store" element={<VendorStorePage />} />
         <Route path="*" element={<VendorHome />} />
       </Routes>
     </DashboardLayout>
