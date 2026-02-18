@@ -62,7 +62,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <Zap className="h-4 w-4 text-white" />
         </div>
         <div>
-          <span className="text-base font-bold text-white">SwiftLocal</span>
+          <span className="text-base font-bold text-white">Deals Nearby</span>
           <div className={cn(
             "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ml-2",
             ROLE_BADGE_COLORS[role]

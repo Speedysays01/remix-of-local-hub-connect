@@ -33,7 +33,7 @@ const VendorApprovalGate: React.FC<Props> = ({ status }) => {
           </h2>
           <p className="text-muted-foreground leading-relaxed">
             {isPending
-              ? "Your vendor account is under review. Once approved by our team, you will be able to start selling on SwiftLocal."
+              ? "Your vendor account is under review. Once approved by our team, you will be able to start selling on Deals Nearby."
               : "Your vendor application was rejected. Please contact support for more information or to appeal the decision."}
           </p>
         </div>
@@ -75,8 +75,8 @@ const VendorApprovalGate: React.FC<Props> = ({ status }) => {
               <p className="text-sm font-semibold">Need help?</p>
               <p className="text-sm text-muted-foreground">
                 Contact our support team at{" "}
-                <a href="mailto:support@swiftlocal.com" className="text-brand hover:underline">
-                  support@swiftlocal.com
+                <a href="mailto:support@dealsnearby.com" className="text-brand hover:underline">
+                  support@dealsnearby.com
                 </a>{" "}
                 with your registered email to learn more or submit an appeal.
               </p>
@@ -86,7 +86,7 @@ const VendorApprovalGate: React.FC<Props> = ({ status }) => {
 
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/60">
           <Zap className="h-3.5 w-3.5" />
-          <span>SwiftLocal Vendor Platform</span>
+          <span>Deals Nearby Vendor Platform</span>
         </div>
       </div>
     </div>
