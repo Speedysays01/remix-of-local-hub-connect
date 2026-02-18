@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import {
   LayoutDashboard, Package, ClipboardList, BarChart3, Store, Settings, Star,
@@ -7,6 +7,9 @@ import ProductsPage from "@/pages/vendor/ProductsPage";
 import VendorOrdersPage from "@/pages/vendor/VendorOrdersPage";
 import VendorStorePage from "@/pages/vendor/VendorStorePage";
 import { Route, Routes } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useVendorProducts } from "@/hooks/useProducts";
+import { useVendorOrders } from "@/hooks/useOrders";
 
 const navItems = [
   { label: "Dashboard", href: "/vendor", icon: LayoutDashboard },
@@ -17,8 +20,6 @@ const navItems = [
   { label: "Reviews", href: "/vendor/reviews", icon: Star },
   { label: "Settings", href: "/vendor/settings", icon: Settings },
 ];
-
-import { useAuth } from "@/contexts/AuthContext";
 
 const StatCard: React.FC<{ label: string; value: string; sub: string; color: string }> = ({
   label, value, sub, color,
@@ -32,6 +33,23 @@ const StatCard: React.FC<{ label: string; value: string; sub: string; color: str
 
 const VendorHome: React.FC = () => {
   const { profile } = useAuth();
+  const { data: products } = useVendorProducts();
+  const { data: orders } = useVendorOrders();
+
+  const totalProducts = products?.length ?? 0;
+  const activeOrders = orders?.filter((o) =>
+    o.status === "pending" || o.status === "accepted"
+  ).length ?? 0;
+  const todayRevenue = orders
+    ?.filter((o) => {
+      const d = new Date(o.created_at);
+      const now = new Date();
+      return d.toDateString() === now.toDateString() && o.status !== "cancelled";
+    })
+    .reduce((sum, o) => sum + Number(o.total_amount), 0) ?? 0;
+
+  const pendingOrders = orders?.filter((o) => o.status === "pending") ?? [];
+
   return (
     <div className="space-y-6">
       <div>
@@ -44,22 +62,53 @@ const VendorHome: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Products" value="0" sub="Add your first product" color="hsl(var(--role-vendor))" />
-        <StatCard label="Active Orders" value="0" sub="No pending orders" color="hsl(var(--brand))" />
-        <StatCard label="Today's Revenue" value="₹0" sub="Sales start here" color="hsl(var(--role-user))" />
-        <StatCard label="Avg. Rating" value="—" sub="No reviews yet" color="hsl(var(--role-admin))" />
+        <StatCard
+          label="Total Products"
+          value={String(totalProducts)}
+          sub={totalProducts === 0 ? "Add your first product" : `${products?.filter(p => p.is_active).length ?? 0} active`}
+          color="hsl(var(--role-vendor))"
+        />
+        <StatCard
+          label="Active Orders"
+          value={String(activeOrders)}
+          sub={activeOrders === 0 ? "No pending orders" : "Needs attention"}
+          color="hsl(var(--brand))"
+        />
+        <StatCard
+          label="Today's Revenue"
+          value={`₹${todayRevenue.toFixed(0)}`}
+          sub="Sales start here"
+          color="hsl(var(--role-user))"
+        />
+        <StatCard
+          label="Avg. Rating"
+          value="—"
+          sub="No reviews yet"
+          color="hsl(var(--role-admin))"
+        />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="rounded-xl border border-border bg-card p-6">
           <h3 className="font-semibold mb-4">Pending Orders</h3>
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <ClipboardList className="h-10 w-10 text-muted-foreground/40 mb-3" />
-            <p className="text-sm text-muted-foreground">No pending orders</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Incoming orders from customers will appear here.
-            </p>
-          </div>
+          {pendingOrders.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <ClipboardList className="h-10 w-10 text-muted-foreground/40 mb-3" />
+              <p className="text-sm text-muted-foreground">No pending orders</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Incoming orders from customers will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {pendingOrders.slice(0, 5).map((order) => (
+                <div key={order.id} className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
+                  <span className="font-medium">#{order.id.slice(0, 8)}</span>
+                  <span className="text-muted-foreground">₹{Number(order.total_amount).toFixed(0)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6">
