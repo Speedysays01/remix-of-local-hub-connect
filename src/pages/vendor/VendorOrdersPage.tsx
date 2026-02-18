@@ -1,34 +1,17 @@
 import React, { useState } from "react";
-import { useVendorOrders, useUpdateOrderStatus, OrderStatus } from "@/hooks/useOrders";
-import { Loader2, ClipboardList, MapPin, Clock, ChevronDown } from "lucide-react";
+import { useVendorOrders, useUpdateOrderStatus, OrderStatus, STATUS_STYLES, STATUS_LABELS } from "@/hooks/useOrders";
+import { Loader2, ClipboardList, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const STATUS_STYLES: Record<OrderStatus, string> = {
-  pending:          "bg-amber-100 text-amber-700 border-amber-200",
-  accepted:         "bg-blue-100 text-blue-700 border-blue-200",
-  ready_for_pickup: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  cancelled:        "bg-red-100 text-red-600 border-red-200",
-};
-
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending:          "Pending",
-  accepted:         "Accepted",
-  ready_for_pickup: "Ready for Pickup",
-  cancelled:        "Cancelled",
-};
-
+// Vendors can only drive orders through: pending→accepted→ready_for_pickup / cancel
 const TRANSITIONS: Record<OrderStatus, { label: string; to: OrderStatus }[]> = {
   pending:          [{ label: "Accept order", to: "accepted" }, { label: "Cancel order", to: "cancelled" }],
   accepted:         [{ label: "Mark ready for pickup", to: "ready_for_pickup" }, { label: "Cancel order", to: "cancelled" }],
-  ready_for_pickup: [],
+  ready_for_pickup: [],   // handed off to delivery
+  picked_up:        [],
+  delivered:        [],
   cancelled:        [],
 };
 

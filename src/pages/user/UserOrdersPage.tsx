@@ -1,24 +1,9 @@
 import React from "react";
-import { useUserOrders } from "@/hooks/useOrders";
+import { useUserOrders, STATUS_STYLES, STATUS_LABELS } from "@/hooks/useOrders";
 import { ShoppingBag, Loader2, Store, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import type { OrderStatus } from "@/hooks/useOrders";
-
-const STATUS_STYLES: Record<OrderStatus, string> = {
-  pending:         "bg-amber-100 text-amber-700 border-amber-200",
-  accepted:        "bg-blue-100 text-blue-700 border-blue-200",
-  ready_for_pickup:"bg-emerald-100 text-emerald-700 border-emerald-200",
-  cancelled:       "bg-red-100 text-red-600 border-red-200",
-};
-
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending:          "Pending",
-  accepted:         "Accepted",
-  ready_for_pickup: "Ready for Pickup",
-  cancelled:        "Cancelled",
-};
 
 const UserOrdersPage: React.FC = () => {
   const { data: orders, isLoading } = useUserOrders();
