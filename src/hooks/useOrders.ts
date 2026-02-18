@@ -161,6 +161,20 @@ export const usePlaceOrder = () => {
 
   return useMutation({
     mutationFn: async (input: PlaceOrderInput): Promise<string> => {
+      // Snapshot the vendor's current store address at order time
+      const { data: vendorProfile } = await supabase
+        .from("profiles")
+        .select("store_name, phone")
+        .eq("user_id", input.vendorId)
+        .single();
+
+      const vendorAddressSnapshot = [
+        vendorProfile?.store_name,
+        vendorProfile?.phone,
+      ]
+        .filter(Boolean)
+        .join(" · ") || null;
+
       const { data: order, error: oErr } = await supabase
         .from("orders")
         .insert({
@@ -169,6 +183,7 @@ export const usePlaceOrder = () => {
           delivery_address: input.deliveryAddress,
           total_amount: input.totalAmount,
           status: "pending",
+          vendor_address_snapshot: vendorAddressSnapshot,
         })
         .select("id")
         .single();
