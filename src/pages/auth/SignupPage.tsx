@@ -30,7 +30,7 @@ const SignupPage: React.FC = () => {
     setLoading(true);
     setError("");
 
-    const { error: authError } = await supabase.auth.signUp({
+    const { data: signUpData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -48,10 +48,15 @@ const SignupPage: React.FC = () => {
       return;
     }
 
+    // If auto-confirm is on, session exists immediately — redirect to their dashboard
+    if (signUpData.session) {
+      navigate(ROLE_DASHBOARDS[selectedRole]);
+      return;
+    }
+
+    // Otherwise show email verification message
     setSuccess(true);
     setLoading(false);
-
-    // After a short delay redirect to login
     setTimeout(() => navigate("/login"), 3000);
   };
 
