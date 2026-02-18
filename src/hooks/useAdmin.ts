@@ -15,6 +15,7 @@ export interface AdminProfile {
   state: string | null;
   zip_code: string | null;
   is_active: boolean;
+  approval_status: string | null;
   created_at: string;
   // enriched
   role?: string;
@@ -94,7 +95,7 @@ export const useAdminVendors = () =>
       const [profilesRes, productsRes, ordersRes] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, user_id, full_name, store_name, phone, pickup_address_line, city, state, zip_code, is_active, created_at")
+          .select("id, user_id, full_name, store_name, phone, pickup_address_line, city, state, zip_code, is_active, approval_status, created_at")
           .in("user_id", vendorIds),
         supabase.from("products").select("vendor_id"),
         supabase.from("orders").select("vendor_id"),

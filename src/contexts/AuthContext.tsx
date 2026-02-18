@@ -13,12 +13,15 @@ interface Profile {
   is_active: boolean;
 }
 
+export type VendorApprovalStatus = "pending" | "approved" | "rejected";
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
   role: AppRole | null;
   isVendorActive: boolean;
+  vendorApprovalStatus: VendorApprovalStatus | null;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -29,6 +32,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   role: null,
   isVendorActive: true,
+  vendorApprovalStatus: null,
   loading: true,
   signOut: async () => {},
 });
@@ -110,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, role, isVendorActive: profile?.is_active ?? true, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, profile, role, isVendorActive: profile?.is_active ?? true, vendorApprovalStatus: (profile as any)?.approval_status ?? null, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

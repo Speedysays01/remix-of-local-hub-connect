@@ -177,6 +177,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approval_status: Database["public"]["Enums"]["vendor_approval_status"]
           avatar_url: string | null
           city: string | null
           created_at: string
@@ -192,6 +193,7 @@ export type Database = {
           zip_code: string | null
         }
         Insert: {
+          approval_status?: Database["public"]["Enums"]["vendor_approval_status"]
           avatar_url?: string | null
           city?: string | null
           created_at?: string
@@ -207,6 +209,7 @@ export type Database = {
           zip_code?: string | null
         }
         Update: {
+          approval_status?: Database["public"]["Enums"]["vendor_approval_status"]
           avatar_url?: string | null
           city?: string | null
           created_at?: string
@@ -270,6 +273,7 @@ export type Database = {
         | "cancelled"
         | "picked_up"
         | "delivered"
+      vendor_approval_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -406,6 +410,7 @@ export const Constants = {
         "picked_up",
         "delivered",
       ],
+      vendor_approval_status: ["pending", "approved", "rejected"],
     },
   },
 } as const

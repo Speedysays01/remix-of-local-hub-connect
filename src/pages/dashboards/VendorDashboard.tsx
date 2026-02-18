@@ -6,6 +6,7 @@ import {
 import ProductsPage from "@/pages/vendor/ProductsPage";
 import VendorOrdersPage from "@/pages/vendor/VendorOrdersPage";
 import VendorStorePage from "@/pages/vendor/VendorStorePage";
+import VendorApprovalGate from "@/pages/vendor/VendorApprovalGate";
 import { Route, Routes } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVendorProducts } from "@/hooks/useProducts";
@@ -140,6 +141,17 @@ const VendorHome: React.FC = () => {
 };
 
 const VendorDashboard: React.FC = () => {
+  const { vendorApprovalStatus } = useAuth();
+
+  // Show blocking screen for pending/rejected vendors
+  if (vendorApprovalStatus === "pending" || vendorApprovalStatus === "rejected") {
+    return (
+      <DashboardLayout navItems={navItems} role="vendor" title="Vendor Dashboard">
+        <VendorApprovalGate status={vendorApprovalStatus} />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout navItems={navItems} role="vendor" title="Vendor Dashboard">
       <Routes>
