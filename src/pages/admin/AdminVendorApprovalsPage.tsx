@@ -3,11 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2, Store, MapPin, Phone, Clock, CheckCircle, XCircle, Search, User,
+  Loader2, Store, MapPin, Phone, Clock, CheckCircle, XCircle, Search, User, Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 interface PendingVendor {
   user_id: string;
@@ -26,7 +28,6 @@ const usePendingVendors = () =>
   useQuery({
     queryKey: ["admin-pending-vendors"],
     queryFn: async (): Promise<PendingVendor[]> => {
-      // Get vendor user_ids
       const { data: vendorRoles } = await supabase
         .from("user_roles")
         .select("user_id")
@@ -72,16 +73,144 @@ const useUpdateVendorApproval = () => {
       });
     },
     onError: (e: Error) => {
-      useToast().toast({ title: "Error", description: e.message, variant: "destructive" });
+      toast({ title: "Error", description: e.message, variant: "destructive" });
     },
   });
 };
 
+// ── Vendor Detail Dialog ─────────────────────────────────────────────────
+const VendorDetailDialog: React.FC<{
+  vendor: PendingVendor | null;
+  onClose: () => void;
+  onAction: (userId: string, status: "approved" | "rejected") => void;
+  isProcessing: boolean;
+}> = ({ vendor, onClose, onAction, isProcessing }) => {
+  if (!vendor) return null;
+
+  const signupDate = new Date(vendor.created_at).toLocaleDateString("en-IN", {
+    day: "numeric", month: "long", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+
+  return (
+    <Dialog open={!!vendor} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-lg w-full">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-role-vendor/10">
+              <Store className="h-4 w-4 text-role-vendor" />
+            </div>
+            Vendor Application
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-5 pt-1">
+          {/* Store identity */}
+          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1">
+            <p className="text-lg font-bold">{vendor.store_name || "Unnamed Store"}</p>
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <User className="h-3.5 w-3.5" />
+              <span>{vendor.full_name || "—"}</span>
+            </div>
+            <Badge className="mt-1 border bg-role-vendor/10 text-role-vendor border-role-vendor/20 text-[10px]">
+              <Clock className="h-3 w-3 mr-1" /> Pending Review
+            </Badge>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Business Details
+            </p>
+
+            <div className="grid grid-cols-1 gap-3">
+              {vendor.phone && (
+                <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
+                  <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <p className="text-sm font-medium">{vendor.phone}</p>
+                  </div>
+                </div>
+              )}
+
+              {vendor.pickup_address_line && (
+                <div className="flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3">
+                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Pickup Address</p>
+                    <p className="text-sm font-medium">{vendor.pickup_address_line}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-3 gap-2">
+                {vendor.city && (
+                  <div className="rounded-lg border border-border bg-card px-3 py-2">
+                    <p className="text-xs text-muted-foreground">City</p>
+                    <p className="text-sm font-medium truncate">{vendor.city}</p>
+                  </div>
+                )}
+                {vendor.state && (
+                  <div className="rounded-lg border border-border bg-card px-3 py-2">
+                    <p className="text-xs text-muted-foreground">State</p>
+                    <p className="text-sm font-medium truncate">{vendor.state}</p>
+                  </div>
+                )}
+                {vendor.zip_code && (
+                  <div className="rounded-lg border border-border bg-card px-3 py-2">
+                    <p className="text-xs text-muted-foreground">ZIP</p>
+                    <p className="text-sm font-medium">{vendor.zip_code}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
+                <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Applied on</p>
+                  <p className="text-sm font-medium">{signupDate}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              disabled={isProcessing}
+              onClick={() => onAction(vendor.user_id, "rejected")}
+              className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/5 hover:border-destructive/50"
+            >
+              {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4 mr-1.5" />}
+              Reject
+            </Button>
+            <Button
+              disabled={isProcessing}
+              onClick={() => onAction(vendor.user_id, "approved")}
+              className="flex-1 bg-role-vendor/15 text-role-vendor hover:bg-role-vendor/25 border border-role-vendor/30"
+            >
+              {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-1.5" />}
+              Approve Vendor
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// ── Main page ─────────────────────────────────────────────────────────────
 const AdminVendorApprovalsPage: React.FC = () => {
   const { data: vendors, isLoading } = usePendingVendors();
   const approvalMutation = useUpdateVendorApproval();
   const [search, setSearch] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [selectedVendor, setSelectedVendor] = useState<PendingVendor | null>(null);
 
   const filtered = (vendors ?? []).filter((v) => {
     const q = search.toLowerCase();
@@ -96,6 +225,7 @@ const AdminVendorApprovalsPage: React.FC = () => {
     setProcessingId(userId);
     await approvalMutation.mutateAsync({ userId, status });
     setProcessingId(null);
+    setSelectedVendor(null);
   };
 
   if (isLoading) {
@@ -130,9 +260,7 @@ const AdminVendorApprovalsPage: React.FC = () => {
         <div className="flex flex-col items-center justify-center py-20 rounded-xl border border-dashed border-border text-center">
           <CheckCircle className="h-10 w-10 text-muted-foreground/30 mb-3" />
           <p className="text-sm font-medium text-muted-foreground">No pending applications</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            All vendor applications have been reviewed.
-          </p>
+          <p className="text-xs text-muted-foreground mt-1">All vendor applications have been reviewed.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -145,9 +273,7 @@ const AdminVendorApprovalsPage: React.FC = () => {
             ].filter(Boolean).join(", ");
 
             const signupDate = new Date(vendor.created_at).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
+              day: "numeric", month: "short", year: "numeric",
             });
 
             const isProcessing = processingId === vendor.user_id;
@@ -160,9 +286,9 @@ const AdminVendorApprovalsPage: React.FC = () => {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   {/* Identity */}
                   <div className="space-y-2 min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-role-vendor/10 shrink-0">
-                        <Store className="h-4.5 w-4.5 text-role-vendor" />
+                        <Store className="h-4 w-4 text-role-vendor" />
                       </div>
                       <div>
                         <p className="font-semibold">{vendor.store_name || "Unnamed Store"}</p>
@@ -171,7 +297,7 @@ const AdminVendorApprovalsPage: React.FC = () => {
                           {vendor.full_name || "—"}
                         </div>
                       </div>
-                      <Badge className="ml-2 border bg-role-vendor/10 text-role-vendor border-role-vendor/20 text-[10px]">
+                      <Badge className="border bg-role-vendor/10 text-role-vendor border-role-vendor/20 text-[10px]">
                         <Clock className="h-3 w-3 mr-1" /> Pending
                       </Badge>
                     </div>
@@ -201,15 +327,19 @@ const AdminVendorApprovalsPage: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
+                      onClick={() => setSelectedVendor(vendor)}
+                    >
+                      <Eye className="h-3.5 w-3.5 mr-1.5" />
+                      View
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
                       disabled={isProcessing || approvalMutation.isPending}
                       onClick={() => handleAction(vendor.user_id, "rejected")}
                       className="border-destructive/30 text-destructive hover:bg-destructive/5 hover:border-destructive/50"
                     >
-                      {isProcessing ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <XCircle className="h-3.5 w-3.5 mr-1.5" />
-                      )}
+                      {isProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5 mr-1.5" />}
                       Reject
                     </Button>
                     <Button
@@ -218,11 +348,7 @@ const AdminVendorApprovalsPage: React.FC = () => {
                       onClick={() => handleAction(vendor.user_id, "approved")}
                       className="bg-role-vendor/15 text-role-vendor hover:bg-role-vendor/25 border border-role-vendor/30"
                     >
-                      {isProcessing ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
-                      )}
+                      {isProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5 mr-1.5" />}
                       Approve
                     </Button>
                   </div>
@@ -232,6 +358,13 @@ const AdminVendorApprovalsPage: React.FC = () => {
           })}
         </div>
       )}
+
+      <VendorDetailDialog
+        vendor={selectedVendor}
+        onClose={() => setSelectedVendor(null)}
+        onAction={handleAction}
+        isProcessing={processingId === selectedVendor?.user_id}
+      />
     </div>
   );
 };
