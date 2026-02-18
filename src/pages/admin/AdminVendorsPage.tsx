@@ -99,15 +99,29 @@ const AdminVendorsPage: React.FC = () => {
 
                   {/* Stats + toggle */}
                   <div className="flex flex-col items-end gap-3 shrink-0">
-                    <Badge
-                      className={`border text-xs ${
-                        vendor.is_active
-                          ? "bg-role-vendor/10 text-role-vendor border-role-vendor/20"
-                          : "bg-destructive/10 text-destructive border-destructive/20"
-                      }`}
-                    >
-                      {vendor.is_active ? "Active" : "Suspended"}
-                    </Badge>
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      {/* Approval status badge */}
+                      {vendor.approval_status === "pending" && (
+                        <Badge className="border text-xs bg-brand/10 text-brand border-brand/20">
+                          Pending Review
+                        </Badge>
+                      )}
+                      {vendor.approval_status === "rejected" && (
+                        <Badge className="border text-xs bg-destructive/10 text-destructive border-destructive/20">
+                          Rejected
+                        </Badge>
+                      )}
+                      {/* Active/suspended badge */}
+                      <Badge
+                        className={`border text-xs ${
+                          vendor.is_active
+                            ? "bg-role-vendor/10 text-role-vendor border-role-vendor/20"
+                            : "bg-destructive/10 text-destructive border-destructive/20"
+                        }`}
+                      >
+                        {vendor.is_active ? "Active" : "Suspended"}
+                      </Badge>
+                    </div>
 
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
