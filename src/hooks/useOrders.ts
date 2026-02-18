@@ -3,7 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-export type OrderStatus = "pending" | "accepted" | "ready_for_pickup" | "cancelled";
+export type OrderStatus =
+  | "pending"
+  | "accepted"
+  | "ready_for_pickup"
+  | "picked_up"
+  | "delivered"
+  | "cancelled";
 
 export interface OrderItem {
   id: string;
@@ -30,6 +36,43 @@ export interface Order {
   vendor_name?: string | null;
 }
 
+/** Human-readable labels for all statuses */
+export const STATUS_LABELS: Record<OrderStatus, string> = {
+  pending:          "Pending",
+  accepted:         "Accepted",
+  ready_for_pickup: "Ready for Pickup",
+  picked_up:        "Picked Up",
+  delivered:        "Delivered",
+  cancelled:        "Cancelled",
+};
+
+/** Tailwind classes per status */
+export const STATUS_STYLES: Record<OrderStatus, string> = {
+  pending:          "bg-amber-100 text-amber-700 border-amber-200",
+  accepted:         "bg-blue-100 text-blue-700 border-blue-200",
+  ready_for_pickup: "bg-violet-100 text-violet-700 border-violet-200",
+  picked_up:        "bg-orange-100 text-orange-700 border-orange-200",
+  delivered:        "bg-emerald-100 text-emerald-700 border-emerald-200",
+  cancelled:        "bg-red-100 text-red-600 border-red-200",
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+const enrichWithVendors = async (orders: Order[]) => {
+  const vendorIds = [...new Set(orders.map((o) => o.vendor_id))];
+  if (!vendorIds.length) return orders;
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("user_id, full_name, store_name")
+    .in("user_id", vendorIds);
+  const pMap: Record<string, { full_name: string | null; store_name: string | null }> = {};
+  (profiles ?? []).forEach((p) => { pMap[p.user_id] = p; });
+  return orders.map((o) => ({
+    ...o,
+    vendor_name: pMap[o.vendor_id]?.full_name ?? null,
+    vendor_store_name: pMap[o.vendor_id]?.store_name ?? null,
+  }));
+};
+
 // ── User: fetch their own orders ──────────────────────────────────────────
 export const useUserOrders = () => {
   const { user } = useAuth();
@@ -42,24 +85,7 @@ export const useUserOrders = () => {
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-
-      const orders = (data ?? []) as Order[];
-      // Enrich with vendor info
-      const vendorIds = [...new Set(orders.map((o) => o.vendor_id))];
-      if (vendorIds.length) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, full_name, store_name")
-          .in("user_id", vendorIds);
-        const pMap: Record<string, { full_name: string | null; store_name: string | null }> = {};
-        (profiles ?? []).forEach((p) => { pMap[p.user_id] = p; });
-        return orders.map((o) => ({
-          ...o,
-          vendor_name: pMap[o.vendor_id]?.full_name ?? null,
-          vendor_store_name: pMap[o.vendor_id]?.store_name ?? null,
-        }));
-      }
-      return orders;
+      return enrichWithVendors((data ?? []) as Order[]);
     },
     enabled: !!user,
   });
@@ -83,6 +109,43 @@ export const useVendorOrders = () => {
   });
 };
 
+// ── Delivery: fetch orders available for pickup / in-flight ───────────────
+export const useDeliveryOrders = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["delivery-orders", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, order_items(*)")
+        .in("status", ["ready_for_pickup", "picked_up"])
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return enrichWithVendors((data ?? []) as Order[]);
+    },
+    enabled: !!user,
+    refetchInterval: 30_000, // poll every 30 s
+  });
+};
+
+// ── Delivery: fetch completed deliveries (history) ────────────────────────
+export const useDeliveryHistory = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["delivery-history", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq("status", "delivered")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return enrichWithVendors((data ?? []) as Order[]);
+    },
+    enabled: !!user,
+  });
+};
+
 // ── Place order mutation ──────────────────────────────────────────────────
 export interface PlaceOrderInput {
   vendorId: string;
@@ -98,7 +161,6 @@ export const usePlaceOrder = () => {
 
   return useMutation({
     mutationFn: async (input: PlaceOrderInput): Promise<string> => {
-      // 1. Create order
       const { data: order, error: oErr } = await supabase
         .from("orders")
         .insert({
@@ -112,7 +174,6 @@ export const usePlaceOrder = () => {
         .single();
       if (oErr) throw oErr;
 
-      // 2. Insert order items
       const { error: iErr } = await supabase.from("order_items").insert(
         input.items.map((item) => ({ ...item, order_id: order.id }))
       );
@@ -130,8 +191,8 @@ export const usePlaceOrder = () => {
   });
 };
 
-// ── Vendor: update order status ───────────────────────────────────────────
-export const useUpdateOrderStatus = () => {
+// ── Generic status update (used by both vendor and delivery) ──────────────
+export const useUpdateOrderStatus = (role: "vendor" | "delivery" = "vendor") => {
   const qc = useQueryClient();
   const { toast } = useToast();
 
@@ -144,17 +205,18 @@ export const useUpdateOrderStatus = () => {
       if (error) throw error;
     },
     onSuccess: (_, { status }) => {
-      qc.invalidateQueries({ queryKey: ["vendor-orders"] });
-      const labels: Record<OrderStatus, string> = {
-        accepted: "Order accepted",
-        ready_for_pickup: "Order marked ready for pickup",
-        cancelled: "Order cancelled",
-        pending: "Order updated",
-      };
-      toast({ title: labels[status] });
+      if (role === "vendor") {
+        qc.invalidateQueries({ queryKey: ["vendor-orders"] });
+      } else {
+        qc.invalidateQueries({ queryKey: ["delivery-orders"] });
+        qc.invalidateQueries({ queryKey: ["delivery-history"] });
+      }
+      qc.invalidateQueries({ queryKey: ["user-orders"] });
+      toast({ title: STATUS_LABELS[status] });
     },
     onError: (e: any) => {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     },
   });
 };
+
