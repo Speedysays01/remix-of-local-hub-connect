@@ -3,10 +3,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Routes, Route } from "react-router-dom";
 import {
-  LayoutDashboard, Bike, Clock, DollarSign, Settings,
+  LayoutDashboard, Bike, Clock, Settings,
 } from "lucide-react";
 import DeliveryOrdersPage from "@/pages/delivery/DeliveryOrdersPage";
 import DeliveryHistoryPage from "@/pages/delivery/DeliveryHistoryPage";
+import { useDeliveryOrders, useDeliveryHistory } from "@/hooks/useOrders";
 
 const navItems = [
   { label: "Dashboard", href: "/delivery", icon: LayoutDashboard },
@@ -27,6 +28,18 @@ const StatCard: React.FC<{ label: string; value: string; sub: string; color: str
 
 const DeliveryHome: React.FC = () => {
   const { profile } = useAuth();
+  const { data: activeOrders } = useDeliveryOrders();
+  const { data: history } = useDeliveryHistory();
+
+  const todayCount = React.useMemo(() => {
+    if (!history) return 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return history.filter((o) => new Date(o.updated_at) >= today).length;
+  }, [history]);
+
+  const activeCount = activeOrders?.length ?? 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between flex-wrap gap-4">
@@ -41,8 +54,8 @@ const DeliveryHome: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard label="Active Orders" value="—" sub="Check Active Orders tab" color="hsl(var(--role-delivery))" />
-        <StatCard label="Today's Deliveries" value="—" sub="Check History tab" color="hsl(var(--role-vendor))" />
+        <StatCard label="Active Orders" value={String(activeCount)} sub="Ready for pickup / in flight" color="hsl(var(--role-delivery))" />
+        <StatCard label="Today's Deliveries" value={String(todayCount)} sub="Delivered today" color="hsl(var(--role-vendor))" />
         <StatCard label="Status" value="Online" sub="Receiving orders" color="hsl(var(--role-user))" />
       </div>
 
