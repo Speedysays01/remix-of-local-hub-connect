@@ -46,7 +46,7 @@ const AdminOverviewPage: React.FC = () => {
       <div>
         <h2 className="text-2xl font-bold">Platform Overview</h2>
         <p className="mt-1 text-muted-foreground">
-          Monitor and manage the entire SwiftLocal ecosystem.
+          Monitor and manage the entire Deals Nearby ecosystem.
         </p>
       </div>
 

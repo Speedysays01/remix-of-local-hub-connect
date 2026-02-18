@@ -63,7 +63,7 @@ const LoginPage: React.FC = () => {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl brand-gradient">
             <Zap className="h-5 w-5 text-white" />
           </div>
-          <span className="text-xl font-bold text-white">SwiftLocal</span>
+          <span className="text-xl font-bold text-white">Deals Nearby</span>
         </div>
 
         <div className="space-y-6">
@@ -97,7 +97,7 @@ const LoginPage: React.FC = () => {
         </div>
 
         <p className="text-xs text-sidebar-foreground/50">
-          © 2024 SwiftLocal. All rights reserved.
+          © 2024 Deals Nearby. All rights reserved.
         </p>
       </div>
 
@@ -109,7 +109,7 @@ const LoginPage: React.FC = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl brand-gradient">
               <Zap className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold">SwiftLocal</span>
+            <span className="text-xl font-bold">Deals Nearby</span>
           </div>
 
           <div>
