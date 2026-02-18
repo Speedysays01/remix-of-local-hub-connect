@@ -161,16 +161,21 @@ export const usePlaceOrder = () => {
 
   return useMutation({
     mutationFn: async (input: PlaceOrderInput): Promise<string> => {
-      // Snapshot the vendor's current store address at order time
-      const { data: vendorProfile } = await supabase
+      // Snapshot the vendor's full pickup address at order time (immutable string)
+      const { data: vp } = await supabase
         .from("profiles")
-        .select("store_name, phone")
+        .select("store_name, pickup_address_line, city, state, zip_code, phone")
         .eq("user_id", input.vendorId)
         .single();
 
+      const addressLine = [vp?.pickup_address_line, vp?.city, vp?.state, vp?.zip_code]
+        .filter(Boolean)
+        .join(", ");
+
       const vendorAddressSnapshot = [
-        vendorProfile?.store_name,
-        vendorProfile?.phone,
+        vp?.store_name,
+        addressLine,
+        vp?.phone,
       ]
         .filter(Boolean)
         .join(" · ") || null;
