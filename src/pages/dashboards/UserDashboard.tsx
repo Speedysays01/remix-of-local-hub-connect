@@ -1,9 +1,9 @@
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, ShoppingBag, Heart, MapPin, Settings, Bell, Search,
+  ShoppingBag, Heart, MapPin, Settings, Bell, Search,
 } from "lucide-react";
 import BrowsePage from "@/pages/browse/BrowsePage";
 import ProductDetailPage from "@/pages/browse/ProductDetailPage";
@@ -14,7 +14,6 @@ import CartButton from "@/components/CartButton";
 import { CartProvider } from "@/contexts/CartContext";
 
 const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Browse", href: "/dashboard/browse", icon: Search },
   { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
   { label: "Favourites", href: "/dashboard/favourites", icon: Heart },
@@ -104,12 +103,12 @@ const UserDashboard: React.FC = () => {
       <DashboardLayout navItems={navItems} role="user" title="My Dashboard" headerActions={<CartButton />}>
         <CartDrawer />
         <Routes>
-          <Route index element={<UserHome />} />
+          <Route index element={<Navigate to="/dashboard/browse" replace />} />
           <Route path="browse" element={<BrowsePage />} />
           <Route path="browse/:id" element={<ProductDetailPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="orders" element={<UserOrdersPage />} />
-          <Route path="*" element={<UserHome />} />
+          <Route path="*" element={<Navigate to="/dashboard/browse" replace />} />
         </Routes>
       </DashboardLayout>
     </CartProvider>
