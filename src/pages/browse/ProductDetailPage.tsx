@@ -30,7 +30,7 @@ const ProductDetailPage: React.FC = () => {
         <p className="text-sm text-muted-foreground mt-1 mb-6">
           This product may be unavailable or no longer listed.
         </p>
-        <Link to="/browse">
+        <Link to="/dashboard/browse">
           <Button variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Browse
@@ -47,7 +47,7 @@ const ProductDetailPage: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Back */}
       <Link
-        to="/browse"
+        to="/dashboard/browse"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
