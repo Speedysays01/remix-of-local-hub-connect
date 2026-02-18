@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, AppRole } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, LogOut, Zap, User, ChevronRight,
+  LogOut, Zap, User, ChevronRight,
   Menu, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ interface DashboardLayoutProps {
   navItems: NavItem[];
   role: AppRole;
   title: string;
+  /** Optional extra actions rendered in the header (e.g. cart button) */
+  headerActions?: React.ReactNode;
 }
 
 const ROLE_BADGE_COLORS: Record<AppRole, string> = {
@@ -40,6 +42,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   navItems,
   role,
   title,
+  headerActions,
 }) => {
   const { profile, signOut } = useAuth();
   const location = useLocation();
@@ -154,11 +157,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <h1 className="text-lg font-semibold">{title}</h1>
             </div>
           </div>
-          <div className={cn(
-            "hidden sm:inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
-            ROLE_BADGE_COLORS[role]
-          )}>
-            {ROLE_LABELS[role]}
+          <div className="flex items-center gap-3">
+            {headerActions}
+            <div className={cn(
+              "hidden sm:inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+              ROLE_BADGE_COLORS[role]
+            )}>
+              {ROLE_LABELS[role]}
+            </div>
           </div>
         </header>
 

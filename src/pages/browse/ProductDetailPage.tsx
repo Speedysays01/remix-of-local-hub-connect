@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useProduct } from "@/hooks/useProducts";
+import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  ArrowLeft, Store, Package, ImageOff, Loader2, AlertCircle, ChevronLeft, ChevronRight,
+  ArrowLeft, Store, Package, ImageOff, Loader2, AlertCircle, ChevronLeft, ChevronRight, ShoppingCart,
 } from "lucide-react";
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { data: product, isLoading, error } = useProduct(id ?? "");
+  const { addItem, vendorId } = useCart();
   const [imageIndex, setImageIndex] = useState(0);
 
   if (isLoading) {
@@ -129,7 +131,7 @@ const ProductDetailPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4 text-muted-foreground" />
             {product.stock_quantity > 0 ? (
-              <span className="text-sm text-emerald-600 font-medium">
+              <span className="text-sm text-role-vendor font-medium">
                 In stock ({product.stock_quantity} available)
               </span>
             ) : (
@@ -147,12 +149,21 @@ const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* CTA placeholder for future cart */}
+          {/* Different vendor warning */}
+          {vendorId && vendorId !== product.vendor_id && (
+            <p className="text-xs text-muted-foreground bg-muted border border-border rounded-lg px-3 py-2">
+              ⚠️ Your cart has items from a different store. Clear your cart first to add this item.
+            </p>
+          )}
+
+          {/* Add to Cart */}
           <Button
             disabled={product.stock_quantity === 0}
+            onClick={() => addItem(product)}
             className="w-full h-11 brand-gradient text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
           >
-            {product.stock_quantity === 0 ? "Out of Stock" : "Add to Cart (coming soon)"}
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            {product.stock_quantity === 0 ? "Out of Stock" : "Add to Cart"}
           </Button>
         </div>
       </div>

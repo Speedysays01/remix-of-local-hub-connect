@@ -7,6 +7,11 @@ import {
 } from "lucide-react";
 import BrowsePage from "@/pages/browse/BrowsePage";
 import ProductDetailPage from "@/pages/browse/ProductDetailPage";
+import CheckoutPage from "@/pages/user/CheckoutPage";
+import UserOrdersPage from "@/pages/user/UserOrdersPage";
+import CartDrawer from "@/components/CartDrawer";
+import CartButton from "@/components/CartButton";
+import { CartProvider } from "@/contexts/CartContext";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -95,14 +100,19 @@ const UserHome: React.FC = () => {
 
 const UserDashboard: React.FC = () => {
   return (
-    <DashboardLayout navItems={navItems} role="user" title="My Dashboard">
-      <Routes>
-        <Route index element={<UserHome />} />
-        <Route path="browse" element={<BrowsePage />} />
-        <Route path="browse/:id" element={<ProductDetailPage />} />
-        <Route path="*" element={<UserHome />} />
-      </Routes>
-    </DashboardLayout>
+    <CartProvider>
+      <DashboardLayout navItems={navItems} role="user" title="My Dashboard" headerActions={<CartButton />}>
+        <CartDrawer />
+        <Routes>
+          <Route index element={<UserHome />} />
+          <Route path="browse" element={<BrowsePage />} />
+          <Route path="browse/:id" element={<ProductDetailPage />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="orders" element={<UserOrdersPage />} />
+          <Route path="*" element={<UserHome />} />
+        </Routes>
+      </DashboardLayout>
+    </CartProvider>
   );
 };
 
