@@ -82,7 +82,7 @@ const BrowsePage: React.FC = () => {
             {products.map((product) => (
               <Link
                 key={product.id}
-                to={`/browse/${product.id}`}
+                to={`/dashboard/browse/${product.id}`}
                 className="group rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col hover:shadow-md hover:border-brand/30 transition-all"
               >
                 {/* Image */}
