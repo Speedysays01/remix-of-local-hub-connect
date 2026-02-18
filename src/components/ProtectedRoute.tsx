@@ -36,20 +36,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Still waiting for role to resolve — keep showing loader
-  if (allowedRoles && !role) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  // After loading completes, if role is still null, default to "user"
+  // (prevents infinite loader if user_roles row is missing)
+  const resolvedRole = role ?? (user ? "user" : null);
 
-  if (allowedRoles && role && !allowedRoles.includes(role)) {
-    const correctPath = ROLE_DASHBOARDS[role] || "/dashboard";
+  if (allowedRoles && resolvedRole && !allowedRoles.includes(resolvedRole)) {
+    const correctPath = ROLE_DASHBOARDS[resolvedRole] || "/dashboard";
     return <Navigate to={correctPath} replace />;
   }
 
